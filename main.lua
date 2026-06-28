@@ -4,7 +4,7 @@ local lasd = require("lasd")
 local json = require("json")
 local physics = require("physics")
 
-local version = "1.0.0.9"
+local version = "1.1.0"
 
 function startBoot(command, message)
     local scene = display.newGroup();
@@ -17,7 +17,7 @@ function startBoot(command, message)
         Runtime:removeEventListener("key", keyboard)
     end
 
-    local outputText = display.newEmbossedText({parent=scene, text="© Entaru Studios 2026. All rights reserved | Version: " .. version .. "\n> ", x=10, y=10, width=display.actualContentWidth-20, font="font.ttf", fontSize=30, align="left"});
+    local outputText = display.newEmbossedText({parent=scene, text="© Entaru Studios 2026 | Version: " .. version .. "\n> ", x=10, y=10, width=display.actualContentWidth-20, font="font.ttf", fontSize=30, align="left"});
     outputText.anchorX = 0; outputText.anchorY = 0;
     if message then
         outputText.text = message .. "\n"
@@ -123,13 +123,7 @@ function startBoot(command, message)
                         elseif event.status == 200 then
                             local allow = {
                                 sk = sk,
-                                math = math,
-                                string = string,
-                                lasd = lasd,
-                                json = json,
-                                table = table,
                                 physics = physics,
-                                timer = timer,
                                 assert = assert,
                                 collectgarbage = collectgarbage,
                                 ipairs = ipairs,
@@ -180,12 +174,6 @@ function startBoot(command, message)
                             elseif event.status == 200 then
                                 local allow = {
                                     sk = sk,
-                                    math = math,
-                                    string = string,
-                                    lasd = lasd,
-                                    json = json,
-                                    table = table,
-                                    physics = physics,
                                     timer = timer,
                                     assert = assert,
                                     collectgarbage = collectgarbage,
@@ -334,6 +322,7 @@ Command list:
     file rename [oldPath] [newPath]
     file list [path]
     download [link] [path] [filename]
+    libs [libraryName]
     reboot
     help
     commandlist]]
@@ -353,6 +342,17 @@ Command list:
                 end
                 answer = "Downloading..."
                 network.download(command[2], "GET", listener, command[3] .. "/" .. command[4], system.DocumentsDirectory);
+            elseif command[1] == "libs" then
+                answer = "Libraries in system:\nLASD\nAdavancedToys"
+                if command[2] then
+                    if command[2] == "LASD" then
+                        answer = "LASD is a library for quickly editing and manipulating data."
+                    elseif command[2] == "AdavancedToys" then
+                        answer = "AdavancedToys is a library adding advanced features to Solar2D"
+                    else
+                        answer = "Unknown library: " .. command[2]
+                    end
+                end
             else
                 if not command[1] then
                     command[1] = ""
