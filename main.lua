@@ -343,12 +343,12 @@ Command list:
                 answer = "Downloading..."
                 network.download(command[2], "GET", listener, command[3] .. "/" .. command[4], system.DocumentsDirectory);
             elseif command[1] == "libs" then
-                answer = "Libraries in system:\nLASD\nAdavancedToys"
+                answer = "Libraries in system:\nLASD\nAdvancedToys"
                 if command[2] then
                     if command[2] == "LASD" then
                         answer = "LASD is a library for quickly editing and manipulating data."
-                    elseif command[2] == "AdavancedToys" then
-                        answer = "AdavancedToys is a library adding advanced features to Solar2D"
+                    elseif command[2] == "AdvancedToys" then
+                        answer = "AdvancedToys is a library adding advanced features to Solar2D"
                     else
                         answer = "Unknown library: " .. command[2]
                     end
