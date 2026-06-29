@@ -1,6 +1,7 @@
-local sk = {}
+local M = {}
 
 local lasd = require("lasd")
+local json = require("json")
 local physics = require("physics")
 local widget = require("widget")
 local lfs = require("lfs")
@@ -10,15 +11,18 @@ local timers = {}
 local catchErrors
 local maingroup = display.newGroup();
 
-sk = {
+M = {
     screenWidth = display.safeActualContentWidth,
     screenHeight = display.safeActualContentHeight,
     zeroX = display.safeScreenOriginX,
     zeroY = display.safeScreenOriginY,
-    contentScale = display.contentScaleX
+    contentScale = display.contentScaleX,
+    display = {},
+    timer = {},
+    fs = {}
 }
 
-function sk.newObject(objType, params)
+function M.display.newObject(objType, params)
     local obj
     if objType == "rect" then
         obj = display.newRect(unpack(params));
@@ -64,21 +68,26 @@ function sk.newObject(objType, params)
     return obj
 end
 
-sk.physics = physics
-sk.audio = audio
-sk.graphics = graphics
-sk.json = json
-sk.math = math
-sk.string = string
-sk.table = table
-sk.os = {clock = os.clock, date = os.date, difftime = os.difftime, time = os.time}
+function M.print(...)
+    native.showAlert("Entaru Kernel", table.concat({...}, " "), {"OK"})
+    print(...)
+end
 
-function sk.addEventListener(object, event, listener)
+M.physics = physics
+M.audio = audio
+M.graphics = graphics
+M.json = json
+M.math = math
+M.string = string
+M.table = table
+M.os = {clock = os.clock, date = os.date, difftime = os.difftime, time = os.time}
+
+function M.addEventListener(object, event, listener)
     object:addEventListener(event, listener)
     table.insert(listeners, {object, event, listener})
 end
 
-function sk.removeEventListener(object, event, listener)
+function M.removeEventListener(object, event, listener)
     for k, v in pairs(listeners) do
         if v[1] == object and v[2] == event and v[3] == listener then
             v[1]:removeEventListener(v[2], v[3])
@@ -88,25 +97,25 @@ function sk.removeEventListener(object, event, listener)
     end
 end
 
-function sk.timer(delay, callback, iterations)
+function M.timer.newTimer(delay, callback, iterations)
     local timer = timer.performWithDelay(delay, callback, iterations)
     table.insert(timers, timer);
     return timer
 end
 
-function sk.cancelTimer(timer)
+function M.timer.cancelTimer(timer)
     timer.cancel(timer)
     table.remove(timers, timer)
 end
 
-function sk.cancelAllTimers()
+function M.timer.cancelAllTimers()
     for i, v in ipairs(timers) do
         timer.cancel(v)
         table.remove(timers, i)
     end
 end
 
-function sk.loadFile(path, callback)
+function M.fs.loadFile(path, callback)
     local file = io.open(system.pathForFile(path, system.DocumentsDirectory), "r")
     if file then
         local data = file:read("*all")
@@ -117,7 +126,7 @@ function sk.loadFile(path, callback)
     end
 end
 
-function sk.saveFile(path, data)
+function M.fs.saveFile(path, data)
     local file = io.open(system.pathForFile(path, system.DocumentsDirectory), "w")
     if file then
         file:write(data)
@@ -125,7 +134,7 @@ function sk.saveFile(path, data)
     end
 end
 
-function sk.deleteFile(path)
+function M.fs.deleteFile(path)
     local function deleteDir(name)
         local path = system.pathForFile(name, system.DocumentsDirectory)
         for file in lfs.dir(path) do
@@ -143,32 +152,73 @@ function sk.deleteFile(path)
     deleteDir(path)
 end
 
-function sk.renameFile(oldPath, newPath)
+function M.fs.renameFile(oldPath, newPath)
     local oldFile = io.open(system.pathForFile(oldPath, system.DocumentsDirectory), "r")
     if oldFile then
         local data = oldFile:read("*all")
         oldFile:close()
-        sk.saveFile(newPath, data)
-        sk.deleteFile(oldPath)
+        M.saveFile(newPath, data)
+        M.deleteFile(oldPath)
     end
 end
 
-function sk.list(path)
+function M.fs.listFiles(path)
     local function list(event)
         return event
     end
     lasd.allFiles(path, system.DocumentsDirectory, list)
 end
 
-function sk.kerdir()
+function M.requireScript(path)
+    local function scriptLoad(event)
+        if event.status == 200 then
+            local script = event.output
+            local allow = {
+                KERVER = version,
+                ek = M,
+                assert = assert,
+                collectgarbage = collectgarbage,
+                ipairs = ipairs,
+                next = next,
+                pairs = pairs,
+                pcall = pcall,
+                rawequal = rawequal,
+                rawget = rawget,
+                rawset = rawset,
+                select = select,
+                setfenv = setfenv,
+                tonumber = tonumber,
+                tostring = tostring,
+                type = type,
+                unpack = unpack
+            }
+            local scriptCode = loadstring(script)
+            if script then
+                setfenv(scriptCode, allow);
+                allow._G = allow
+                local success, result = pcall(scriptCode)
+                if not success then
+                    return nil, result
+                else
+                    return result
+                end
+            end
+        else
+            return nil
+        end
+    end
+    lasd.load(path, system.DocumentsDirectory, scriptLoad)
+end
+
+function M.kerdir()
     return system.ResourceDirectory
 end
 
-function sk.sysdir()
+function M.sysdir()
     return system.DocumentsDirectory
 end
 
-function sk.closeAll()
+function M.closeAll()
     display.remove(maingroup)
     for k, v in pairs(listeners) do
         v[1]:removeEventListener(v[2], v[3])
@@ -180,12 +230,12 @@ function sk.closeAll()
 end
 
 function catchErrors(event)
-    sk.closeAll()
+    M.closeAll()
     startBoot("boot", "We're catch an error. Reason: " .. event.errorMessage)
 end
 
-function sk.version()
-    return "1.0.0"
+function M.version()
+    return "1.1.0"
 end
 
-return sk
+return M

@@ -1,10 +1,10 @@
-local sk = require("sk")
+local ek = require("ek")
 local at = require("advancedToys")
 local lasd = require("lasd")
 local json = require("json")
 local physics = require("physics")
 
-local version = "1.1.0"
+version = "1.1.1"
 
 function startBoot(command, message)
     local scene = display.newGroup();
@@ -122,8 +122,8 @@ function startBoot(command, message)
                             answer = "File " .. command[2] .. " not founded"
                         elseif event.status == 200 then
                             local allow = {
-                                sk = sk,
-                                physics = physics,
+                                KERVER = version,
+                                ek = ek,
                                 assert = assert,
                                 collectgarbage = collectgarbage,
                                 ipairs = ipairs,
@@ -173,8 +173,8 @@ function startBoot(command, message)
                                 answer = "File " .. loadFileName .. " not founded"
                             elseif event.status == 200 then
                                 local allow = {
-                                    sk = sk,
-                                    timer = timer,
+                                    KERVER = version,
+                                    ek = ek,
                                     assert = assert,
                                     collectgarbage = collectgarbage,
                                     ipairs = ipairs,
