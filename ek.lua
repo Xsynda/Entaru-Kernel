@@ -1,6 +1,7 @@
 local M = {}
 
 local lasd = require("lasd")
+local at = require("advancedToys")
 local json = require("json")
 local physics = require("physics")
 local widget = require("widget")
@@ -33,7 +34,7 @@ function M.display.newObject(objType, params)
     elseif objType == "group" then
         obj = display.newGroup();
     elseif objType == "image" then
-        obj = display.newImage(params);
+        obj = display.newImage(unpack(params));
     elseif objType == "imageRect" then
         obj = display.newImageRect(params);
     elseif objType == "line" then
@@ -68,6 +69,13 @@ function M.display.newObject(objType, params)
     return obj
 end
 
+function M.display.removeObject(obj)
+    if obj then
+        maingroup:remove(obj)
+        display.remove(obj)
+    end
+end
+
 function M.print(...)
     native.showAlert("Entaru Kernel", table.concat({...}, " "), {"OK"})
     print(...)
@@ -80,7 +88,9 @@ M.json = json
 M.math = math
 M.string = string
 M.table = table
+M.transition = transition
 M.os = {clock = os.clock, date = os.date, difftime = os.difftime, time = os.time}
+M.at = at
 
 function M.addEventListener(object, event, listener)
     object:addEventListener(event, listener)
@@ -115,18 +125,22 @@ function M.timer.cancelAllTimers()
     end
 end
 
-function M.fs.loadFile(path, callback)
+function M.fs.openFile(path, callback)
     local file = io.open(system.pathForFile(path, system.DocumentsDirectory), "r")
     if file then
         local data = file:read("*all")
         file:close()
         if callback then
-            callback(data)
+            callback({status = "done", data = data})
+        end
+    else
+        if callback then
+            callback({status = "error", data = "File not found or unknown error"})
         end
     end
 end
 
-function M.fs.saveFile(path, data)
+function M.fs.writeFile(path, data)
     local file = io.open(system.pathForFile(path, system.DocumentsDirectory), "w")
     if file then
         file:write(data)
@@ -134,7 +148,11 @@ function M.fs.saveFile(path, data)
     end
 end
 
-function M.fs.deleteFile(path)
+function M.fs.newFolder(path, folderName, callback)
+    lasd.createFolder(path, folderName, system.DocumentsDirectory, callback)
+end
+
+function M.fs.deleteFileOrFolder(path)
     local function deleteDir(name)
         local path = system.pathForFile(name, system.DocumentsDirectory)
         for file in lfs.dir(path) do
@@ -162,14 +180,14 @@ function M.fs.renameFile(oldPath, newPath)
     end
 end
 
-function M.fs.listFiles(path)
+function M.fs.listFiles(path, callback)
     local function list(event)
-        return event
+        callback(event)
     end
     lasd.allFiles(path, system.DocumentsDirectory, list)
 end
 
-function M.requireScript(path)
+function M.requireScript(path, localG)
     local function scriptLoad(event)
         if event.status == 200 then
             local script = event.output
@@ -194,8 +212,8 @@ function M.requireScript(path)
             }
             local scriptCode = loadstring(script)
             if script then
-                setfenv(scriptCode, allow);
-                allow._G = allow
+                setfenv(scriptCode, localG or allow);
+                allow._G = localG or allow
                 local success, result = pcall(scriptCode)
                 if not success then
                     return nil, result
@@ -210,6 +228,23 @@ function M.requireScript(path)
     lasd.load(path, system.DocumentsDirectory, scriptLoad)
 end
 
+function M.requireModule(path, localG)
+    return M.requireScript(path, localG)
+end
+
+function M.display.loadFont(fontName, fontPath)
+    local file = io.open(system.pathForFile(fontPath, system.DocumentsDirectory), "rb")
+    if file then
+        local fontData = file:read("*all")
+        file:close()
+        newFile = io.open(system.pathForFile("fonts/", system.ResourceDirectory) .. fontName, "wb")
+        if newFile then
+            newFile:write(fontData)
+            newFile:close()
+        end
+    end
+end
+
 function M.kerdir()
     return system.ResourceDirectory
 end
@@ -222,11 +257,22 @@ function M.closeAll()
     display.remove(maingroup)
     for k, v in pairs(listeners) do
         v[1]:removeEventListener(v[2], v[3])
+        table.remove(listeners, k)
     end
     for i, v in ipairs(timers) do
         timer.cancel(v)
         table.remove(timers, i)
     end
+end
+
+function M.removeScene()
+    M.closeAll()
+    maingroup = display.newGroup();
+end
+
+function M.shutdown()
+    M.closeAll()
+    startBoot("boot")
 end
 
 function catchErrors(event)

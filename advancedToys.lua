@@ -51,8 +51,49 @@ function string:split(pattern)
     end
 end
 
+function M.contains(self, x, y)
+    if (x < self.contentBounds.xMax and x > self.contentBounds.xMin) and (y < self.contentBounds.yMax and y > self.contentBounds.yMin) then
+        return true
+    else
+        return false
+    end
+end
+
+function M.setButtonListener(target, listener)
+    local function touchListener(event)
+        if event.phase == "began" then
+            listener(event)
+            display.getCurrentStage():setFocus(event.target, event.id)
+            return true
+        elseif event.phase == "moved" then
+            listener(event)
+        elseif event.phase == "ended" then
+            listener(event)
+            display.getCurrentStage():setFocus(nil, event.id)
+        end
+    end
+    target:addEventListener("touch", touchListener)
+end
+
+function M.formatValue(value, letterTable)
+    if value and letterTable and type(value) == "number" then
+        if value >= 1000000000000 then
+            return string.format("%.1f"..letterTable.trillion, value/1000000000000)
+        elseif value >= 1000000000 then
+            return string.format("%.1f"..letterTable.billion, value/1000000000)
+        elseif value >= 1000000 then
+            return string.format("%.1f"..letterTable.million, value/1000000)
+        elseif value >= 1000 then
+            return string.format("%.1f"..letterTable.thousand, value/1000)
+        else
+            return tostring(value)
+        end
+    end
+end
+
 function M.version()
-    print("LIBRARY VERSION 2.0.0 © Entaru Studios")
+    print("LIBRARY VERSION 2.3.0 © Entaru Studios")
+    return "2.3.0", 2
 end
 
 return M

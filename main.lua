@@ -2,7 +2,6 @@ local ek = require("ek")
 local at = require("advancedToys")
 local lasd = require("lasd")
 local json = require("json")
-local physics = require("physics")
 
 version = "1.1.1"
 
@@ -147,7 +146,7 @@ function startBoot(command, message)
                                 local result, reason = pcall(startCode)
                                 if result == false then
                                     answer = "Failed to start. Reason: " .. (reason or "no reason")
-                                    sk.closeAll()
+                                    ek.closeAll()
                                 else
                                     stopBoot()
                                 end
@@ -198,7 +197,7 @@ function startBoot(command, message)
                                     local result, reason = pcall(startCode)
                                     if result == false then
                                         answer = "Failed to start. Reason: " .. (reason or "no reason")
-                                        sk.closeAll()
+                                        ek.closeAll()
                                     else
                                         stopBoot()
                                     end
@@ -307,6 +306,7 @@ function startBoot(command, message)
                 end
             elseif command[1] == "reboot" then
                 answer = "Reboot..."
+                ek.closeAll()
                 stopBoot()
                 startBoot("boot")
             elseif command[1] == "commandlist" or command[1] == "help" then
@@ -343,12 +343,14 @@ Command list:
                 answer = "Downloading..."
                 network.download(command[2], "GET", listener, command[3] .. "/" .. command[4], system.DocumentsDirectory);
             elseif command[1] == "libs" then
-                answer = "Libraries in system:\nLASD\nAdvancedToys"
+                answer = "Libraries in system:\nLASD\nAdvancedToys\nek (entaru kernel)"
                 if command[2] then
                     if command[2] == "LASD" then
                         answer = "LASD is a library for quickly editing and manipulating data."
                     elseif command[2] == "AdvancedToys" then
                         answer = "AdvancedToys is a library adding advanced features to Solar2D"
+                    elseif command[2] == "ek" or command[2] == "ek (entaru kernel)" then
+                        answer = "ek (entaru kernel) is the core library for the entaru kernel. It's add API for working with files, display, and other features."
                     else
                         answer = "Unknown library: " .. command[2]
                     end
